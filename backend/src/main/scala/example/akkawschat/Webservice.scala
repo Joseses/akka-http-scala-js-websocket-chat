@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.{ Message, TextMessage }
 
 import scala.concurrent.duration._
-import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.{ Directives, Route }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import upickle.default._
@@ -16,13 +16,13 @@ import shared.Protocol._
 import scala.util.Failure
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives {
-  val theChat = Chat.create(system)
+  val theChat: Chat = Chat.create(system)
   import system.dispatcher
   system.scheduler.schedule(15.second, 15.second) {
     theChat.injectMessage(ChatMessage(sender = "clock", s"Bling! The time is ${new Date().toString}."))
   }
 
-  def route =
+  def route: Route =
     get {
       pathSingleSlash {
         getFromResource("web/index.html")
@@ -31,13 +31,13 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         // so that's where we pick them up
         path("frontend-launcher.js")(getFromResource("frontend-launcher.js")) ~
         path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
+        path("jsaes.js")(getFromResource("web/jsaes.js")) ~
         path("chat") {
           parameter('name) { name ⇒
             handleWebSocketMessages(websocketChatFlow(sender = name))
           }
         }
-    } ~
-      getFromResourceDirectory("web")
+    } ~ getFromResourceDirectory("web")
 
   def websocketChatFlow(sender: String): Flow[Message, Message, Any] =
     Flow[Message]

@@ -1,20 +1,29 @@
 <html>
-<body>
-<div>Hello World!</div>
+    <body>
+        <div>Hello World!</div>
 
-<form action="#">
-    <label for="name">Name: </label><input id="name" type="text" />
-    <input id="join" type="button" value="Join!"/>
-</form>
+        <form action="#">
+            <label for="name">Name: </label><input id="name" type="text" />
+            <input id="join" type="button" value="Join!"/>
+        </form>
 
-<form action="#">
-    <label for="message">Say something: </label><input id="message" type="text" />
-    <input id="send" type="button" value="Send" disabled="true"/>
-</form>
+        <div>
+            <label for="set">Key: </label><input id="key" type="text" />
+            <input id="set" type="button" value="Set"/>
+            <input id="generate" type="button" value="Generate"/>
+        </div>
 
-<div id="playground"/>
+        <div>Actual key: <span id="actualkey"></span></div>
 
-<script type="text/javascript" src="frontend-fastopt.js"></script>
-<script type="text/javascript" src="frontend-launcher.js"></script>
-</body>
+        <form action="#">
+            <label for="message">Say something: </label><input id="message" type="text" />
+            <input id="send" type="button" value="Send" disabled="true"/>
+        </form>
+
+        <div id="playground"></div>
+
+        <script type="text/javascript" src="jsaes.js"></script>
+        <script type="text/javascript" src="frontend-fastopt.js"></script>
+        <script type="text/javascript" src="frontend-launcher.js"></script>
+    </body>
 </html>

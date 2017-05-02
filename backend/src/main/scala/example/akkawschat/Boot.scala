@@ -17,6 +17,7 @@ object Boot extends App {
   val service = new Webservice
 
   val binding = Http().bindAndHandle(service.route, interface, port)
+
   binding.onComplete {
     case Success(binding) ⇒
       val localAddress = binding.localAddress

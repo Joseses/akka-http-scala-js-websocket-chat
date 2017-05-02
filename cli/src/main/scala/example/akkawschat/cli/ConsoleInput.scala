@@ -8,7 +8,7 @@ import scala.concurrent.{ Future, ExecutionContext }
 import scala.util.control.NoStackTrace
 
 class ConsoleInput(implicit ec: ExecutionContext) extends GraphStage[SourceShape[Char]] {
-  val out = Outlet[Char]("consoleOut")
+  val out: Outlet[Char] = Outlet[Char]("consoleOut")
   val shape: SourceShape[Char] = SourceShape(out)
 
   def createLogic(inheritedAttributes: Attributes): GraphStageLogic =

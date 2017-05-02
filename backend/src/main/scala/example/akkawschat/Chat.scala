@@ -16,32 +16,31 @@ object Chat {
     // The implementation uses a single actor per chat to collect and distribute
     // chat messages. It would be nicer if this could be built by stream operations
     // directly.
-    val chatActor =
-      system.actorOf(Props(new Actor {
-        var subscribers = Set.empty[(String, ActorRef)]
+    val chatActor = system.actorOf(Props(new Actor {
+      var subscribers = Set.empty[(String, ActorRef)]
 
-        def receive: Receive = {
-          case NewParticipant(name, subscriber) ⇒
-            context.watch(subscriber)
-            subscribers += (name -> subscriber)
-            dispatch(Protocol.Joined(name, members))
-          case msg: ReceivedMessage      ⇒ dispatch(msg.toChatMessage)
-          case msg: Protocol.ChatMessage ⇒ dispatch(msg)
-          case ParticipantLeft(person) ⇒
-            val entry @ (name, ref) = subscribers.find(_._1 == person).get
-            // report downstream of completion, otherwise, there's a risk of leaking the
-            // downstream when the TCP connection is only half-closed
-            ref ! Status.Success(Unit)
-            subscribers -= entry
-            dispatch(Protocol.Left(person, members))
-          case Terminated(sub) ⇒
-            // clean up dead subscribers, but should have been removed when `ParticipantLeft`
-            subscribers = subscribers.filterNot(_._2 == sub)
-        }
-        def sendAdminMessage(msg: String): Unit = dispatch(Protocol.ChatMessage("admin", msg))
-        def dispatch(msg: Protocol.Message): Unit = subscribers.foreach(_._2 ! msg)
-        def members = subscribers.map(_._1).toSeq
-      }))
+      def receive: Receive = {
+        case NewParticipant(name, subscriber) ⇒
+          context.watch(subscriber)
+          subscribers += (name -> subscriber)
+          dispatch(Protocol.Joined(name, members))
+        case msg: ReceivedMessage      ⇒ dispatch(msg.toChatMessage)
+        case msg: Protocol.ChatMessage ⇒ dispatch(msg)
+        case ParticipantLeft(person) ⇒
+          val entry @ (name, ref) = subscribers.find(_._1 == person).get
+          // report downstream of completion, otherwise, there's a risk of leaking the
+          // downstream when the TCP connection is only half-closed
+          ref ! Status.Success(Unit)
+          subscribers -= entry
+          dispatch(Protocol.Left(person, members))
+        case Terminated(sub) ⇒
+          // clean up dead subscribers, but should have been removed when `ParticipantLeft`
+          subscribers = subscribers.filterNot(_._2 == sub)
+      }
+      def sendAdminMessage(msg: String): Unit = dispatch(Protocol.ChatMessage("admin", msg))
+      def dispatch(msg: Protocol.Message): Unit = subscribers.foreach(_._2 ! msg)
+      def members: Seq[String] = subscribers.map(_._1).toSeq
+    }))
 
     // Wraps the chatActor in a sink. When the stream to this sink will be completed
     // it sends the `ParticipantLeft` message to the chatActor.
@@ -65,6 +64,7 @@ object Chat {
 
         Flow.fromSinkAndSource(in, out)
       }
+
       def injectMessage(message: Protocol.ChatMessage): Unit = chatActor ! message // non-streams interface
     }
   }
